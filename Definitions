@@ -1,0 +1,89 @@
+Kubernetes is an open-source container orchestration platform for automating the deployment, scaling, and management of containerized applications.
+
+Control plane: The control plane provides the core Kubernetes services and orchestration of application workloads.
+The API server (kube-apiserver) exposes the Kubernetes API to enable requests to the cluster from inside and outside of the cluster.
+The highly available key-value store etcd helps to maintain the state of your Kubernetes cluster and configuration.
+The scheduler (kube-scheduler) helps to make scheduling decisions. It watches for new pods with no assigned node and selects a node for them to run on.
+The controller manager (kube-controller-manager) runs controller processes, such as noticing and responding when nodes go down.
+The cloud controller manager (cloud-controller-manager) embeds cloud-specific control logic to run controllers specific to the cloud provider.
+
+Nodes: Nodes are the underlying virtual machines (VMs) that run your applications.
+The kubelet ensures that containers are running in a pod.
+The kube-proxy is a network proxy that maintains network rules on nodes.
+The container runtime manages the execution and lifecycle of containers.
+
+The Following namespaces are created by default whenever you create Cluster
+The default namespace allows you to start using cluster resources without creating a new namespace.
+The kube-node-lease namespace enables nodes to communicate their availability to the control plane.
+The kube-public namespace isn't typically used, but you can use it so that resources are visible across the whole cluster by any user.
+The kube-system namespace is used by Kubernetes to manage cluster resources, such as coredns, konnectivity-agent, and metrics-server.
+
+Kubernetes resources, such as pods and deployments, are logically grouped into namespaces 
+ 
+
+The Manifest(YAML or JSON) file have following fields:
+apiVersion - Which version of the Kubernetes API you're using to create this object
+kind - What kind of object you want to create
+metadata - Data that helps uniquely identify the object, including a name string, UID, and optional namespace
+spec - What state you desire for the object
+
+Admission controller: Enforce security policies and validate compliance.
+==========================================================================================================================================================
+gcloud init
+gcloud config list
+gcloud config set compute/region us-east2
+Gcloud config configurations create/delete/describe/activate/list
+
+
+The node should also have tools for handling container operations, such as containerd or CRI-O(A lightweight container runtime specially for kubernetes)
+
+kubelet: is the agent running in nodes to communicate with control node.
+
+etcd: Consistent and highly-available key value store used as Kubernetes' backing store for all cluster data.
+
+Pods: A pod is a group of one or more containers that share the same network and storage resources and a specification for how to run the containers. The smallest deployable units of computing that you can create and manage in Kubernetes.
+
+Service: A service assigns a stable IP to a group of pods and distributes traffic among them.
+
+Daemonset:
+Kubernetes controller that ensures a specific pod "runs on all nodes", background services.
+
+Statefulset service:
+Each pod has unique, stable identity, persistent storage.
+Data consistency and persistence.
+
+Rolling Update: Gradually replace old pod with new pod without any downtime.
+# kubectl rollout undo deployment/nginx
+# kubectl rollout undo deployment/nginx --to-revision=2 to particular revision
+# kubectl autoscale deployment <deployment-name> --cpu-percent=80 --min=2 --max=5
+
+# kubectl top pod --container-name
+
+Kubectl set-context --current --namespace <namespacename> ---> It will set permanent namespace.
+
+===========================================================
+Troubleshoot Pod Crashing:
+. kubectl logs <podname>
+. kubectl describe pod <podname>
+. Check resource limits
+. Kubectl get pod <podname> -o wide
+
+Service not reaching the correct pod
+. 
+
+Pod is in pending state:
+Resource, scheduler issue, storage
+. kubectl describe node <nodename>
+. kubectl get pvc --> for storage
+. kubectl describe pod <podname> --> pod events
+. kubectl networkpolicy -A
+. kubectl logs -n kube-system kube-scheduler-<nodename>
+
+
+SLI (Service Level Indicator): The raw metrics that show how your service is behaving, such as request latency, error rates, or throughput. These are the metrics that matter to users.
+SLO (Service Level Objective): A target value or range of values for a service level measured by an SLI (e.g., "99.9% of requests must succeed"). They define the, "health" of a service and are used to manage "error budgets".
+SLA (Service Level Agreement): A formal contract between a service provider and a customer that promises a specific level of availability or performance. It usually includes financial penalties or credits if the service fails to meet the promised level. 
+
+Incident Management: Focuses on restoring service as quickly as possible, often using temporary workarounds (e.g., rebooting a server) to minimize impact.
+Problem Management: Proactively identifies and eliminates the underlying cause of recurring incidents, reducing long-term issues.
+Change Management: Manages the implementation of fixes (derived from problems) or upgrades in a controlled way, reducing the risk of creating new incidents. 
