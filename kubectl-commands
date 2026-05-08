@@ -1,0 +1,52 @@
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 745611938000.dkr.ecr.eu-west-1.amazonaws.com	  
+
+kubectl get ns
+kubectl get pods -n dev
+kubectl get pods --all-namespaces
+kubectl get svc -n qa
+kubectl get endpoints -n qa
+kubectl apply -f enc-config.yaml -n dev
+kubectl delete -f enc-config.yaml -n dev
+kubectl edit deployment bff -n dev
+kubectl describe ingress -n qa
+kubectl delete ingress qa-ingress -n qa
+kubectl delete pod test08-mfhsm -n dev
+kubectl scale deployment/bff --replicas=1 -n dev
+kubectl describe deployment/archival-indexer -n dev|grep  Image
+kubectl describe deployment/archival-indexer -n dev
+kubectl create job --from=cj/test test08 -n dev
+kubectl logs archival-indexer-7c86bddd5-5s4d9 --namespace=dev|tail -n 200
+kubectl set image deployment/archival-indexer archival-indexer=745611938000.dkr.ecr.eu-west-1.amazonaws.com/uam/dev/archival-indexer:6 -n dev
+kubectl exec -it test08-mfhsm --namespace=dev -c test -- /bin/sh
+kubectl describe configmap metacreds -n qa
+kubectl edit configmap metacreds -n qa
+kubectl create namespace argocd
+kubectl cp -n qa archival-search-695bd8ffbd-c6xgp:/tmp/java_pid1-2024-01-09_11-08-35.hdump/ /root/dumps/java_pid1-2024-01-09_11-08-35.hdump
+kubectl get events --sort-by=.metadata.creationTimestamp -n dev ---> When pod is failing to start
+kubectl delete pod ui-6565d86879-8khb2 --grace-period=0 --force --namespace dev
+eksctl scale nodegroup --cluster=uam-dev-cluster --nodes=0 --name=uam-eks-cluster-node --nodes-min=0 --nodes-max=6 --region eu-west-1
+eksctl get nodegroup --cluster uam-dev-cluster --region eu-west-1
+kubectl get hpa -n qa
+kubectl delete hpa archival-um -n qa
+kubectl describe hpa tms -n qa
+kubectl top pod -n qa
+kubectl top node ---resource utilization of the nodes in our cluster
+kubectl top pod -l app.kubernetes.io/created-by=eks-workshop -A ---resource utilization of pods
+kubectl describe limits mem-limit-range -n live
+kubectl rollout restart deployment/ingress-nginx-controller -n ingress-nginx -----> restart nginx controller
+# Restart all deployments in the test-namespace namespace
+  kubectl rollout restart deployment -n test-namespace
+  
+  # Restart a deployment
+  kubectl rollout restart deployment/nginx
+  
+  # Restart a daemon set
+  kubectl rollout restart daemonset/abc
+  
+  # Restart deployments with the app=nginx label
+  kubectl rollout restart deployment --selector=app=nginx
+
+To clear terminating namespace:
+kubectl get namespace "ingress-nginx" -o json jq 'del(.spec.finalizers)' kubectl replace --raw /api/v1/namespaces/ingress-nginx/finalize -f -
+
+
