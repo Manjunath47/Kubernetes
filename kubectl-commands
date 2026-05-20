@@ -1,5 +1,3 @@
-aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 745611938000.dkr.ecr.eu-west-1.amazonaws.com	  
-
 kubectl get ns
 kubectl get pods -n dev
 kubectl get pods --all-namespaces
