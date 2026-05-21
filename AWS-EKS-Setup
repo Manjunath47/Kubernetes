@@ -4,13 +4,13 @@ EKS SETUP
 
 2. Ingress controller created. 
 
-baseNXT_DevOps_uam/prod/ingress/nginx-ingress-controller-internal-v1.1.1.yaml at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+ingress file
 
 Path: prod/ingress/nginx-ingress-controller-internal-v1.1.1.yaml 
 
 3. Cluster bootstrap. 
 
-WEF-DOP-TO/baseNXT_DevOps_basenxt-eks-cluster 
+bootstrap file 
 
 3.1 Create namespaces. 
 
@@ -58,7 +58,7 @@ If no output is returned, then you must create an IAM OIDC provider for your 		c
 
 Policy path: 
 
-baseNXT_DevOps_uam/eks-cluster-autoscaler at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+policy json 
 
 Path: eks-cluster-autoscaler 
 
@@ -76,7 +76,7 @@ Path: eks-cluster-autoscaler
 
 Path for cluster-autoscaler-auto-discovery.yaml:  
 
-baseNXT_DevOps_uam/eks-cluster-autoscaler at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+discover.yaml 
 
 Change Image path and Cluster name in yaml. 
 
@@ -104,9 +104,7 @@ Replace ${AUTOSCALER_VERSION} with kubectl server version.
 
 12. Setup Horizontal Pod Autoscaler(HPA). 
 
-baseNXT_DevOps_uam/hpa at master · WEF-DOP-TO/baseNXT_DevOps_uam 
-
-Path: hpa 
+hpa 
 
 Dependency: metrics-server 
 
