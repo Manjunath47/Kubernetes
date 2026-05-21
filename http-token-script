@@ -1,0 +1,21 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/var/lib/snapd/snap/bin:/root/bin:/usr/local/bin:/root/bin:/usr/local/bin
+NOW=$( date '+%F_%H:%M:%S' )
+cd /root
+source ~/.bash_profile
+
+kubectl get nodes -o custom-columns=NAME:.metadata.name,INSTANCEID:.spec.providerID | cut -d'/' -f5 | awk '{print $1}' | awk 'NR > 1' > /mnt/instance-ids
+
+IFS=$'\n'
+echo "===================================================================$NOW============================================================="
+for line in $(cat "/mnt/instance-ids"); do
+
+        var1=$(aws ec2 describe-instances --instance-ids $line --query 'Reservations[*].Instances[*].MetadataOptions.HttpPutResponseHopLimit' --output text)
+#       echo $var1
+if [ "$var1" == 1 ]; then
+#       echo "Hop limit not set"
+        aws ec2 modify-instance-metadata-options --instance-id $line --http-put-response-hop-limit 2
+else
+        echo "Hop limit already set"
+fi
+done
