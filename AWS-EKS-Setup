@@ -1,0 +1,117 @@
+EKS SETUP 
+
+1. Request sent to sys team for EKS cluster, ECR, setup & S3 bucket creation. 
+
+2. Ingress controller created. 
+
+baseNXT_DevOps_uam/prod/ingress/nginx-ingress-controller-internal-v1.1.1.yaml at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+
+Path: prod/ingress/nginx-ingress-controller-internal-v1.1.1.yaml 
+
+3. Cluster bootstrap. 
+
+WEF-DOP-TO/baseNXT_DevOps_basenxt-eks-cluster 
+
+3.1 Create namespaces. 
+
+3.2 Set CPU and Memory limits. 
+
+4. MongoDB installation. 
+
+5. MongoDB logs export to CloudWatch 
+
+For Mongo Logs sent to CLoudwatch 
+
+5.1. yum install amazon-cloudwatch-agent 
+
+5.2. /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard 
+
+5.3. /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status 
+
+5.4. /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c /opt/aws/amazon-cloudwatch-agent/bin/config.json 
+
+5.5. /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2  -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s 
+
+5.6. systemctl status amazon-cloudwatch-agent 
+
+6. Cluster Autoscaler setup. 
+
+6.1 Determine whether you have an existing IAM OIDC provider for your cluster. Retrieve your cluster's OIDC provider ID and store it in a variable. Replace my-cluster with your own value. 
+
+# export cluster_name=<cluster-name> 
+
+# oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5) 
+
+6.2 Determine whether an IAM OIDC provider with your cluster's ID is already in your 	account 
+
+# aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4 
+
+If output is returned, then you already have an IAM OIDC provider for your cluster 
+
+If no output is returned, then you must create an IAM OIDC provider for your 		cluster. 
+
+# eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve –region <your region> 
+
+6.3 Create below IAM Policy to file ca-iam-policy.json 
+
+# aws iam create-policy --policy-name k8s-cluster-autoscaler-asg-policy --policy-document file://ca-iam-policy.json 
+
+Policy path: 
+
+baseNXT_DevOps_uam/eks-cluster-autoscaler at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+
+Path: eks-cluster-autoscaler 
+
+6.4 Create IAM Role 
+
+# export AWS_ACCOUNT_ID="<account ID>" 
+
+ # eksctl create iamserviceaccount --name cluster-autoscaler --namespace kube-	system --cluster <cluster-name> --attach-policy-arn			"arn:aws:iam::${AWS_ACCOUNT_ID}:policy/k8s-cluster-autoscaler-asg-policy" --approve 	--override-existing-serviceaccounts --region=<your region> 
+
+# kubectl -n kube-system describe sa cluster-autoscaler 
+
+6.5 Deploy Cluster Autoscaler 
+
+# kubectl apply -f ./cluster-autoscaler-auto-discovery.yaml 
+
+Path for cluster-autoscaler-auto-discovery.yaml:  
+
+baseNXT_DevOps_uam/eks-cluster-autoscaler at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+
+Change Image path and Cluster name in yaml. 
+
+# kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false" 
+
+# kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${AUTOSCALER_VERSION} 
+
+Replace ${AUTOSCALER_VERSION} with kubectl server version. 
+
+7. Docker installation (Require License) 
+
+8. Pull and push images. (will check with Ajay and final which image) 
+
+9. Created Deployments and services. 
+
+10. CloudWatch logging setup for EKS containers. (enable the option in gui console) 
+
+10.1 Ensure all options are enabled in control plane logging section under cluster observability. (compare with prod) 
+
+10.2 aws eks create-addon --cluster-name <cluster-name >--addon-name amazon-cloudwatch-observability 
+
+10.3 curl https://raw.githubusercontent.com/aws-observability/aws-otel-	collector/main/deployment-template/eks/otel-container-insights-infra.yaml | kubectl apply -f - 
+
+11. Created ingress. 
+
+12. Setup Horizontal Pod Autoscaler(HPA). 
+
+baseNXT_DevOps_uam/hpa at master · WEF-DOP-TO/baseNXT_DevOps_uam 
+
+Path: hpa 
+
+Dependency: metrics-server 
+
+# kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml 
+
+# kubectl get deployment metrics-server -n kube-system 
+
+ 
