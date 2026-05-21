@@ -1,0 +1,220 @@
+Prepare AWS Cloud Shell or Any Compute instance to operate EKS cluster
+Install latest AWS CLI
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+unzip awscliv2.zip
+
+sudo ./aws/install
+
+Ref Url: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+Install eksctl
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl version
+
+Ref Url: https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html
+
+Install kubectl
+
+curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.22.6/2022-03-09/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl
+
+mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+
+kubectl version --short --client
+
+Ref Url: https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html Ref URL: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+
+Configure cloud shell to access AWS resources
+
+aws configure
+
+aws configure list
+
+Ref Url: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
+
+Install Gcloud curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz tar -xf google-cloud-cli-linux-x86_64.tar.gz ./google-cloud-sdk/install.sh ./google-cloud-sdk/install.sh --help ./google-cloud-sdk/bin/gcloud init ./google-cloud-sdk/bin/gcloud version
+
+Container Image Pull and Push command from Basenxt dev gcr to AWS ECR
+Open gcp cloud shell
+
+Install AWS CLI in gcp cloud shell
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+unzip awscliv2.zip
+
+sudo ./aws/install
+
+Ref Url: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+Private registry authentication
+
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin xxxxxxxx.dkr.ecr.eu-west-1.amazonaws.com
+
+Ref Url: https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html
+
+Setup private reqistry for the services
+
+Ref Url: https://docs.aws.amazon.com/AmazonECR/latest/userguide/get-set-up-for-amazon-ecr.html
+
+Sample pull and push command
+
+gcloud docker -- pull gcr.io/base3x-dev/basenxt/kafka:2.13-2.8.1 && docker tag gcr.io/base3x-dev/basenxt/kafka:2.13-2.8.1 592110584794.dkr.ecr.eu-west-1.amazonaws.com/basenxt/kafka:2.13-2.8.1 && docker -- push 592110584794.dkr.ecr.eu-west-1.amazonaws.com/basenxt/kafka:2.13-2.8.1
+
+EKS Cluster Setup
+Create Amazon EKS cluster role
+
+a. Save the following contents to a file named cluster-service-role.json
+
+{ "Version": "2012-10-17", "Statement": [ { "Effect": "Allow", "Principal": { "Service": "eks.amazonaws.com" }, "Action": "sts:AssumeRole" } ] }
+
+b. Create the role. You can replace eksClusterRole with any name that you choose
+
+aws iam create-role
+--role-name eksClusterRole
+--assume-role-policy-document file://"cluster-service-role.json"
+
+Attach the required IAM policy to the role
+
+aws iam attach-role-policy
+--policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+--role-name eksClusterRole
+
+Ref Url: https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html#create-service-role
+
+Create Amazon EKS node IAM role
+
+a. Copy the following contents to a file named node-role-trust-relationship.json
+
+{ "Version": "2012-10-17", "Statement": [ { "Effect": "Allow", "Principal": { "Service": "ec2.amazonaws.com" }, "Action": "sts:AssumeRole" } ] }
+
+b. Create the IAM role
+
+aws iam create-role
+--role-name AmazonEKSNodeRole
+--assume-role-policy-document file://"node-role-trust-relationship.json"
+
+c. Attach two required IAM managed policies to the IAM role
+
+aws iam attach-role-policy
+--policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+--role-name AmazonEKSNodeRole aws iam attach-role-policy
+--policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+--role-name AmazonEKSNodeRole
+
+d. Attach IAM policies for IPv4 family
+
+aws iam attach-role-policy
+--policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+--role-name AmazonEKSNodeRole
+
+Ref Url: https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html#create-worker-node-role
+
+Go to Amazon Elastic Kubernetes Service and create the cluster (cluster creation will be done using terraform in future)
+
+Adding Admin user(s) in EKS
+
+kubectl get configmap -n kube-system
+
+kubectl get configmap aws-auth -n kube-system -o yaml > aws-auth-configmap.yaml
+
+kubectl apply -f aws-auth-configmap.yaml -n kube-system
+
+kubectl get configmap aws-auth -n kube-system
+
+kubectl describe configmap aws-auth -n kube-system
+
+Cluster bootstrapping and Basenxt service setup commands
+Connect to cluster from AWS Cloud Shell or Any Compute instance
+
+aws eks --region eu-west-1 update-kubeconfig --name basenxt-cluster
+
+aws eks --region eu-west-1 describe-cluster --name basenxt-cluster --query cluster.status
+
+Create namespace
+
+kubectl create ns dev
+
+Set Pod CPU and Memory limit range in the namespace
+
+kubectl apply -f cpu-limit.yaml -n dev
+
+kubectl apply -f mem-limit.yaml -n dev
+
+Deploy Statefulsets
+
+kubectl apply -f es-cluster.yml -n dev
+
+kubectl apply -f kibana.yml -n dev
+
+kubectl apply -f kafka.yml -n dev
+
+kubectl apply -f zk.yml -n dev
+
+kubectl apply -f redis-ha.yml -n dev
+
+Deploy Deployments and Services
+
+kubectl apply -f tms.yml -n dev
+
+kubectl apply -f audit-server.yml -n dev
+
+kubectl apply -f flowable-rest.yml -n dev
+
+kubectl apply -f fuse-wipro.yml -n dev
+
+kubectl apply -f fuse-client-4.yml -n dev
+
+kubectl apply -f gems.yml -n dev
+
+kubectl apply -f notification.yml -n dev
+
+kubectl apply -f process-service.yml -n dev
+
+kubectl apply -f qrs.yml -n dev
+
+kubectl apply -f rbaclauth.yml -n dev
+
+kubectl apply -f scheduler-fuse-gateway.yml -n dev
+
+kubectl apply -f search-service.yml -n dev
+
+kubectl apply -f workbench.yml -n dev
+
+kubectl apply -f workbench2.yml -n dev
+
+Create configmaps
+
+kubectl apply -f enc-config.yml -n dev
+
+Create Secrets
+
+kubectl apply -f basenxtdev-cert.yml -n dev
+
+Create nginx ingress controller
+
+kubectl apply -f nginx-ingress-controller-external-v1.1.1.yml -n ingress-nginx
+
+Create ingress
+
+kubectl apply -f kibana-ingress.yml -n dev
+
+kubectl apply -f application-ingress.yml -n dev
+
+Cloudwatch logging setup for EKS containers
+Sending container logs from AWS EKS to AWS CloudWatch using Fluentd
+
+Follow dev/cloudwatch-logging/how-to-guide
+
+Sample Logs Insights query
+
+fields @timestamp, @message
+
+| filter ispresent (kubernetes.container_name) and kubernetes.container_name like /redis*/
